@@ -145,3 +145,9 @@ class Getter(object, metaclass=ProxyMetaclass):
                             yield f"{ip}:{port}"
             except requests.RequestException as e:
                 logging.info(f"Error crawling {url}: {e}")
+
+
+if __name__ == "__main__":
+    # Initialize and run the getter
+    getter = Getter()
+    getter.run()

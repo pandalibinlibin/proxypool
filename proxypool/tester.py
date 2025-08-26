@@ -45,3 +45,9 @@ class Tester:
                 await asyncio.gather(*tasks)
         except Exception as e:
             print(f"Testing error: {e}")
+
+
+if __name__ == "__main__":
+    # Initialize and run the tester
+    tester = Tester()
+    asyncio.run(tester.run())
