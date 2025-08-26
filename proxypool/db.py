@@ -1,18 +1,10 @@
 import redis
 import random
-import random
-
-MAX_SCORE = 100
-MIN_SCORE = 0
-INITIAL_SCORE = 10
-REDIS_HOST = "localhost"
-REDIS_PORT = 6379
-REDIS_PASSWORD = None
-REDIS_KEY = "proxies"
+from .setting import Setting
 
 
 class RedisClient:
-    def __init__(self, host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD):
+    def __init__(self, host=Setting.REDIS_HOST, port=Setting.REDIS_PORT, password=Setting.REDIS_PASSWORD):
         """
         Initialize the Redis client and create a connection.
 
@@ -24,7 +16,7 @@ class RedisClient:
             host=host, port=port, password=password, decode_responses=True
         )
 
-    def add(self, proxy, score=INITIAL_SCORE):
+    def add(self, proxy, score=Setting.INITIAL_SCORE):
         """
         Add a proxy to Redis and set its score.
 
@@ -32,8 +24,8 @@ class RedisClient:
         :param score: The score of the proxy, default is INITIAL_SCORE
         :return: The number of elements added to the sorted set, with duplicates ignored
         """
-        if not self.db.zscore(REDIS_KEY, proxy):
-            return self.db.zadd(REDIS_KEY, {proxy: score})
+        if not self.db.zscore(Setting.REDIS_KEY, proxy):
+            return self.db.zadd(Setting.REDIS_KEY, {proxy: score})
 
     def random(self):
         """
@@ -45,12 +37,12 @@ class RedisClient:
         :return: A randomly selected proxy
         """
         # Try to get proxies with MAX_SCORE
-        proxies = self.db.zrangebyscore(REDIS_KEY, MAX_SCORE, MAX_SCORE)
+        proxies = self.db.zrangebyscore(Setting.REDIS_KEY, Setting.MAX_SCORE, Setting.MAX_SCORE)
         if proxies:
             return random.choice(proxies)
 
         # If no MAX_SCORE proxies, get all non-empty proxies in descending order of score
-        proxies = self.db.zrevrange(REDIS_KEY, 0, -1)
+        proxies = self.db.zrevrange(Setting.REDIS_KEY, 0, -1)
         if proxies:
             return random.choice(proxies)
 
@@ -65,13 +57,13 @@ class RedisClient:
         :param proxy: The proxy whose score needs to be decreased
         :return: The new score of the proxy if it still exists, None if deleted
         """
-        score = self.db.zscore(REDIS_KEY, proxy)
+        score = self.db.zscore(Setting.REDIS_KEY, proxy)
         if score is None:
             return None
         new_score = score - 1
         if new_score < MIN_SCORE:
-            return self.db.zrem(REDIS_KEY, proxy)
-        return self.db.zadd(REDIS_KEY, {proxy: new_score})
+            return self.db.zrem(Setting.REDIS_KEY, proxy)
+        return self.db.zadd(Setting.REDIS_KEY, {proxy: new_score})
 
     def exists(self, proxy):
         """
@@ -80,7 +72,7 @@ class RedisClient:
         :param proxy: The proxy to be checked
         :return: True if the proxy exists, False otherwise
         """
-        return self.db.zscore(REDIS_KEY, proxy) is not None
+        return self.db.zscore(Setting.REDIS_KEY, proxy) is not None
 
     def max(self, proxy):
         """
@@ -89,7 +81,7 @@ class RedisClient:
         :param proxy: The proxy whose score needs to be set to the maximum
         :return: The number of elements added to the sorted set, with duplicates ignored
         """
-        return self.db.zadd(REDIS_KEY, {proxy: MAX_SCORE})
+        return self.db.zadd(Setting.REDIS_KEY, {proxy: Setting.MAX_SCORE})
 
     def count(self):
         """
@@ -97,7 +89,7 @@ class RedisClient:
 
         :return: The total number of proxies
         """
-        return self.db.zcard(REDIS_KEY)
+        return self.db.zcard(Setting.REDIS_KEY)
 
     def all(self):
         """
@@ -105,4 +97,4 @@ class RedisClient:
 
         :return: A list of proxies
         """
-        return self.db.zrangebyscore(REDIS_KEY, MIN_SCORE, MAX_SCORE)
+        return self.db.zrangebyscore(Setting.REDIS_KEY, Setting.MIN_SCORE, Setting.MAX_SCORE)
